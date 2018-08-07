@@ -1,0 +1,8 @@
+thegame-server
+
+*.swp
+*.pyc
+
+.DS_Store
+/venv
+/log
