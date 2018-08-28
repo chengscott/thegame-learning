@@ -9,7 +9,7 @@ import multiprocessing
 import tensorflow as tf
 import argparse
 
-from env_thegame import Thegame
+from env_thegame import ThegameEnv
 
 
 def train(num_timesteps, seed, policy, save_interval, load_path, save_path):
@@ -24,7 +24,7 @@ def train(num_timesteps, seed, policy, save_interval, load_path, save_path):
   tf.Session(config=config).__enter__()
 
   #env = VecFrameStack(make_atari_env(env_id, 8, seed), 4)
-  env = Thegame()
+  env = ThegameEnv()
   policy = {
       'cnn': CnnPolicy,
       'lstm': LstmPolicy,

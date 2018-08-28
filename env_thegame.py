@@ -56,7 +56,7 @@ def run_client(pipe_actions, pipe_obv_reward):
   Client.main(pipe_actions, pipe_obv_reward)
 
 
-class Thegame:
+class ThegameEnv:
   def __init__(self):
     self.action_space = spaces.Box(
         low=np.array([0.0, 0.0, 0.0]),
@@ -107,7 +107,6 @@ class Thegame:
     self.pipe_actions[0].send(actions)
     #self.client.set_action(actions)
     self.server.sync()
-    #sleep(0.01)
     obv, reward = self.pipe_obv_reward[1].recv()
     self.observation_save = obv
     done = False
@@ -133,25 +132,18 @@ class Client(HeadlessClient):
     self.shoot_dir = 0
     self.level_up_type = 0
     self.prev_observation = np.zeros((160, 160, 5))
-    self.do_level_up = {
-        0: lambda: None,
-        1: lambda: self.level_up(Ability.BulletDamage),
-        2: lambda: self.level_up(Ability.HealthRegen),
-        3: lambda: self.level_up(Ability.MaxHealth),
-        4: lambda: self.level_up(Ability.Reload),
-        5: lambda: self.level_up(Ability.BodyDamage),
-        6: lambda: self.level_up(Ability.BulletSpeed),
-        7: lambda: self.level_up(Ability.BulletPenetration),
-        8: lambda: self.level_up(Ability.MovementSpeed),
-        9: lambda: None
-    }
+    self.skills = [
+        Ability.HealthRegen, Ability.MaxHealth, Ability.MovementSpeed,
+        Ability.BulletDamage, Ability.BodyDamage, Ability.Reload,
+        Ability.BulletSpeed, Ability.BulletPenetration
+    ]
     self.penalty = 0
 
   def set_action(self, actions):
     acc_dir, shoot_dir, level_up_type = actions
     self.acc_dir = acc_dir
     self.shoot_dir = shoot_dir
-    self.level_up_type = int(level_up_type)
+    self.level_up_type = level_up_type
 
   def action(self, hero, heroes, polygons, bullets):
     self.observation = to_state(hero, heroes, polygons, bullets)
@@ -172,16 +164,16 @@ class Client(HeadlessClient):
     level_up_type = int((level_up_type + 2) / 4 * 9)
     acc_dir = np.clip(acc_dir, 0, 2 * pi)
     shoot_dir = np.clip(shoot_dir, 0, 2 * pi)
-    level_up_type = np.clip(level_up_type, 0, 9)
+    level_up_type = np.clip(level_up_type, 0, 7)
 
     self.pipe_obv_reward.send((self.observation, self.reward + self.penalty))
 
     self.accelerate(acc_dir)
     self.shoot(shoot_dir)
-    self.do_level_up[int(level_up_type)]
+    self.level_up(self.skills[int(level_up_type)])
 
   def _parse(self):
-    self.remote = "localhost:55666"
+    self.remote = ':55666'
 
   def set_pipe(self, pipe_actions, pipe_obv_reward):
     self.pipe_obv_reward = pipe_obv_reward
